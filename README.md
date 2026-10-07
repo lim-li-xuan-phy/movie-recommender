@@ -28,14 +28,14 @@ The MovieLens 100K dataset released in April 1998 was used to train the demo mod
 
 - **Batching:** At every training epoch, the model is fed batches of samples and undergoes training batch-by-batch until the entire training set has been input into the model. At the end of a training epoch, the trained PyTorch tensors are collated together by the `torch.utils.data.DataLoader.default_collate()` function. Having a batch size that is too small can result in unstable predictions and prevent convergence, but training the model on the entire training set in one go requires very large random-access memory. An appropriate batch size has to be chosen for efficient and low-memory model training. The default batch size in this project is 256. 
 
-- **Model - Two-Tower neural network:** The Two-Tower model consists of a user tower and a item (movie) tower. Each tower processes each of their respective features (ie. user and movie IDs) into vectors, known as embeddings, and outputs these embeddings. The similarity score is computed for each user-item pair by taking the dot product of the user embeddings and item embeddings. The model outputs the sum of the similarity scores of all user-item pairs. Embeddings are initialized with small random weights. During training, the loss function calculates the loss from the similarity scores and the optimizer adjusts the weights to optimize the similarity score of each user-item pair towards their true targets (ie. positive or negative interaction).
+- **Model - Two-Tower deep neural network:** The Two-Tower model consists of a user tower and a item (movie) tower. The deep neural network (DNN) in each tower transforms the vector representation of each observation (ie. a user ID or a movie ID), known as an embedding, non-linearly and outputs the final representations. The similarity score is computed for each user-item pair by taking the dot product of the final user embeddings and final item embeddings. The model outputs the sum of the similarity scores of all user-item pairs. Embeddings are initialized with small random weights. During training, the loss function calculates the loss from the similarity scores and the optimizer adjusts the weights to optimize the similarity score of each user-item pair towards their true targets (ie. positive or negative interaction). 
 
 ![Model diagram](assets/two-tower-diagram.png)
 
 
 - **Loss function - Binary cross-entropy (BCE):** Measures the deviation of the model's predicted similarity scores from the true targets. The targets are `1.0` = positive interaction/liked the movie and `0.0` = negative interaction/disliked the movie. A lower BCE loss signals better predictive accuracy of the model. A positive interaction with a low similarity score, or a negative interaction with a high similarity score, will both give a large loss. 
 
-- **Optimizer - Adaptive moment estimation (Adam):** Modifies the weights in the weight matrices of each tower's embeddings to minimize the loss function. 
+- **Optimizer - Adaptive moment estimation (Adam):** Modifies the weights in the weight matrices of each tower's base embeddings to minimize the loss function. 
 
 - **Early stopping:** If a model is trained over too many epochs, it will be overfitted to the training set and make poor predictions on new data. This project halts the model training once the validation loss stops improving for a certain number of consecutive epochs. 
 
@@ -176,7 +176,7 @@ Use the `-h` flag to view other available flags. You can configure the model tra
 
 Run the Uvicorn web server.
 ```
-uvicorn api:app --reload
+python -m uvicorn api:app --reload
 ```
 Expected output:
 ```
@@ -255,17 +255,17 @@ After training the model on the MovieLens 100K dataset, we assess the model's pe
 
 **NDCG@K:** Normalized discounted cumulative gain (NDCG) measures the ranking quality of recommended items. Cumulative Gain (CG) adds up the relevance scores of the recommended items. Discounted Cumulative Gain (DCG) penalizes highly relevant items being ranked lower on the top-*K* recommendation list. NDCG divides the DCG score by the ideal DCG (IDCG) score, which describes what the score would be if the system ranked all items correctly.
 
-| Metrics     | Random       | This project |
-| ----------- | ------------ | ------------ |
-|Precision@10 | ~0.0065      |  ~0.1488     |
-|Recall@10    | ~0.0075      |  ~0.2123     |
-|NDCG@10      | ~0.0073      |  ~0.2207     |
+| Metrics     | Random  | This project |Improvement by ___ times |
+| ----------- | ------- | ------------ | ----------------------- |
+|Precision@10 | ~0.0102 |  ~0.1274     | 12.5                    |
+|Recall@10    | ~0.0124 |  ~0.1740     | 14.0                    |
+|NDCG@10      | ~0.0143 |  ~0.1863     | 13.0                    |
 
-👍 Our results over the three metrics indicate that the movie recommender is roughly **20 times more accurate** than random selection in predicting the top 10 movies that a user will like. 
+👍 Our results over the three metrics indicate that the movie recommender is roughly **10 times more accurate** than random selection in predicting the top 10 movies that a user will like. 
 
 # Future work
 The predictive accuracy of the model can be enhanced with these methods:
-- ✨**Deeper neural network:** Enable learning of non-linear interactions, which are more realistic.
+
 - ✨**Train on more user and item features:** Relevant features such as age, gender, genre, and acting cast may have significant contributions to movie preferences. Implementing these features into the model can result in more accurate predictions.
 - ✨**Increase negative samples:** Allows model to more accurately discern the boundaries between positive and negative interactions after training.
 
