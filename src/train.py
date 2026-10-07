@@ -135,7 +135,7 @@ def main():
     optimizer = torch.optim.Adam(model.parameters(), lr=0.005, weight_decay=1e-5)
 
     # Initial evaluation before training
-    p, r, n = evaluate_retrieval(model, train, test_pos, num_users, num_items, K=10, batch_size=batch_size)
+    p, r, n = evaluate_retrieval(model, train, test_pos, num_items, K=10, batch_size=batch_size)
     print(f"Pre-train metrics - Precision@10: {p:.4f}, Recall@10: {r:.4f}, NDCG@10: {n:.4f}")
 
     train_losses = []
@@ -180,7 +180,7 @@ def main():
         val_losses.append(avg_val_loss)
 
         # Run retrieval evaluation on validation set
-        val_p, val_r, val_n = evaluate_retrieval(model, train, val_pos, num_users, num_items, K=10, batch_size=batch_size)
+        val_p, val_r, val_n = evaluate_retrieval(model, train, val_pos, num_items, K=10, batch_size=batch_size)
         print(f"Epoch {epoch+1:02d}/{epochs:02d} | Train Loss: {avg_loss:.4f} | Val Loss: {avg_val_loss:.4f} | Val Precision@10: {val_p:.4f}, Recall@10: {val_r:.4f}, NDCG@10: {val_n:.4f}")
         
         # Early stopping
@@ -200,7 +200,7 @@ def main():
     print(f"Trained model saved in {best_model_path}.")
 
     # Final evaluation on test set
-    test_p, test_r, test_n = evaluate_retrieval(model, train, test_pos, num_users, num_items, K=10, batch_size=batch_size)
+    test_p, test_r, test_n = evaluate_retrieval(model, train, test_pos, num_items, K=10, batch_size=batch_size)
     print(f"Final Test Metrics - Precision@10: {test_p:.4f}, Recall@10: {test_r:.4f}, NDCG@10: {test_n:.4f}")
 
     # From the trained model, save item embeddings only.
@@ -228,7 +228,7 @@ def main():
     print("Done! You can now run: uvicorn api:app --reload")
 
 @torch.no_grad()
-def evaluate_retrieval(model, train_df, test_pos_df, num_users, num_items, K=10, batch_size=256):
+def evaluate_retrieval(model, train_df, test_pos_df, num_items, K=10, batch_size=256):
     model.eval()
     device = next(model.parameters()).device
     

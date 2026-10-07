@@ -62,31 +62,49 @@ class TwoTowerModel(nn.Module):
     This class implements the two-tower model.
     """
 
-    def __init__(self, num_users, num_items, embedding_dim=64):
+    def __init__(self, num_users, num_items, embedding_dim=64, hidden_dim=128):
         super().__init__()
 
-        # User Tower
+        # User tower
         self.user_embedding = nn.Embedding(num_users, embedding_dim)
-        # Item (Movie) Tower
+        # Item (movie) tower
         self.item_embedding = nn.Embedding(num_items, embedding_dim)
+
+        # User tower MLP of depth 3
+        self.user_mlp = torch.nn.Sequential(
+            torch.nn.Linear(embedding_dim, hidden_dim),
+            torch.nn.ReLU(),
+            torch.nn.Linear(hidden_dim, hidden_dim),
+            torch.nn.ReLU(),
+            torch.nn.Linear(hidden_dim, embedding_dim)
+            )
+        
+        # Item tower MLP of depth 3
+        self.item_mlp = torch.nn.Sequential(
+            torch.nn.Linear(embedding_dim, hidden_dim),
+            torch.nn.ReLU(),
+            torch.nn.Linear(hidden_dim, hidden_dim),
+            torch.nn.ReLU(),
+            torch.nn.Linear(hidden_dim, embedding_dim)
+            )
         
         # Initialize embeddings with small random weights, sampled from normal distribution, to help convergence
         nn.init.normal_(self.user_embedding.weight, std=0.01)
         nn.init.normal_(self.item_embedding.weight, std=0.01)
-        
-    def forward(self, user_indices, item_indices):
-        # We use a shallow Two-Tower neural network due to the low dimension of the dataset and small sample size. 
-        # A deeper neural network introduces more weights, and would risk overfitting on such a dataset. 
-        # user_rep and item_rep are each a single linear layer of embeddings.
-        user_rep = self.user_embedding(user_indices)
-        item_rep = self.item_embedding(item_indices)
 
-        # Dot product similarity. For each sample, sum the similarity score over all embedding-pairs.
-        scores = torch.sum(user_rep * item_rep, dim=-1)
-        return scores
-    
     def get_user_embeddings(self, user_indices):
-        return self.user_embedding(user_indices)
+        user_rep = self.user_embedding(user_indices) 
+        return self.user_mlp(user_rep)
         
     def get_item_embeddings(self, item_indices):
-        return self.item_embedding(item_indices)
+        item_rep = self.item_embedding(item_indices)
+        return self.item_mlp(item_rep)
+        
+    def forward(self, user_indices, item_indices):
+        user_out = self.get_user_embeddings(user_indices)
+        item_out = self.get_item_embeddings(item_indices)
+
+        # Dot product similarity. For each sample, sum the similarity score over all embedding-pairs.
+        scores = torch.sum(user_out * item_out, dim=-1)
+        return scores
+    
